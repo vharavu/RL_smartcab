@@ -45,11 +45,13 @@ class LearningAgent(Agent):
     def build_state(self):
         """ The build_state function is called when the agent requests data from the 
             environment. The next waypoint, the intersection inputs, and the deadline 
-            are all features available to the agent. """
+            are all features available to the agent.
+            :rtype: tuple"""
 
         # Collect data about the environment
-        waypoint = self.planner.next_waypoint() # The next waypoint 
-        inputs = self.env.sense(self)           # Visual input - intersection light and traffic
+        waypoint = []
+        waypoint.append(self.planner.next_waypoint()) # The next waypoint rtype string
+        inputs = self.env.sense(self)           # Visual input - intersection light and traffic rtype dict
         deadline = self.env.get_deadline(self)  # Remaining deadline
 
         ########### 
@@ -58,11 +60,12 @@ class LearningAgent(Agent):
         
         # NOTE : you are not allowed to engineer features outside of the inputs available.
         # Because the aim of this project is to teach Reinforcement Learning, we have placed 
-        # constraints in order for you to learn how to adjust epsilon and alpha, and thus learn about the balance between exploration and exploitation.
+        # constraints in order for you to learn how to adjust epsilon and alpha, and thus learn
+        # about the balance between exploration and exploitation.
         # With the hand-engineered features, this learning process gets entirely negated.
         
         # Set 'state' as a tuple of relevant data for the agent        
-        state = None
+        state = tuple(waypoint + inputs.values())
 
         return state
 
@@ -167,7 +170,7 @@ def run():
     # Follow the driving agent
     # Flags:
     #   enforce_deadline - set to True to enforce a deadline metric
-    env.set_primary_agent(agent, enforce_deadline=True)
+    env.set_primary_agent(agent, enforce_deadline=False)
 
     ##############
     # Create the simulation
@@ -176,15 +179,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, log_metrics=True, update_delay=0.01,
-                    display=False)
+    sim = Simulator(env, log_metrics=True, display=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=10)
+    sim.run()
 
 
 if __name__ == '__main__':
