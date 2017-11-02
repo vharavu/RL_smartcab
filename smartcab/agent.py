@@ -24,7 +24,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
-
+        self.trial = 1
 
     def reset(self, destination=None, testing=False):
         """ The reset function is called at the beginning of each trial.
@@ -44,7 +44,14 @@ class LearningAgent(Agent):
             self.epsilon = 0.0
             self.alpha = 0.0
         else:
-            self.epsilon -= 0.05
+            #self.epsilon -= 0.05
+            self.epsilon = math.exp(-1.0 * 0.005 * self.trial)  # e^(-at)
+            #self.epsilon = math.cos(0.005 * self.trial)
+            #eps1 = math.exp(-1.0 * 0.005 * self.trial)
+            #eps2 = math.cos(0.005 * self.trial)
+            #self.epsilon = (eps1 + eps2)/2.0
+            #self.epsilon = 1.0/math.pow(self.trial, 2.0)
+            self.trial += 1
         return None
 
     def build_state(self):
@@ -99,7 +106,7 @@ class LearningAgent(Agent):
 
         if state not in self.Q.keys():
             self.Q[state] = {None: 0.0, 'forward': 0.0, 'left': 0.0, 'right': 0.0}
-        print self.Q
+        #print self.Q
         return
 
     def choose_action(self, state):
@@ -147,9 +154,11 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
-
+        # get self.Q[state][action]; this is the Q value to be updated
+        #new value is: (1 - alpha) x Qold + (alpha x (reward + Qold))
+        Qprevious = self.Q[state][action]
+        self.Q[state][action] = ((1.0 - self.alpha) * Qprevious) + (self.alpha * (reward + Qprevious))
         return
-
 
     def update(self):
         """ The update function is called when a time step is completed in the 
@@ -159,7 +168,7 @@ class LearningAgent(Agent):
         state = self.build_state()          # Get current state
         self.createQ(state)                 # Create 'state' in Q-table
         action = self.choose_action(state)  # Choose an action
-        reward = self.env.act(self, action) # Receive a reward
+        reward = self.env.act(self, action)  # Receive a reward
         self.learn(state, action, reward)   # Q-learn
 
         return
@@ -183,7 +192,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent)
+    agent = env.create_agent(LearningAgent, learning=True)
 
     ##############
     # Follow the driving agent
@@ -198,14 +207,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, log_metrics=True, display=True, update_delay=0.01)
+    sim = Simulator(env, log_metrics=True, display=True, update_delay=0.01, optimized=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=10)
+    sim.run(n_test=50, tolerance=0.01)
 
 
 if __name__ == '__main__':
