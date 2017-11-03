@@ -45,12 +45,12 @@ class LearningAgent(Agent):
             self.alpha = 0.0
         else:
             #self.epsilon -= 0.05
-            self.epsilon = math.exp(-1.0 * 0.005 * self.trial)  # e^(-at)
-            #self.epsilon = math.cos(0.005 * self.trial)
-            #eps1 = math.exp(-1.0 * 0.005 * self.trial)
+            self.epsilon = math.exp(-1.0 * 0.005 * self.trial)  # FINAL choice
+            #self.epsilon = math.cos(0.005 * self.trial)  # doesn't doas well as e^-at
+            #eps1 = math.exp(-1.0 * 0.005 * self.trial)  #trying to pick avg of cos and e^-at
             #eps2 = math.cos(0.005 * self.trial)
             #self.epsilon = (eps1 + eps2)/2.0
-            #self.epsilon = 1.0/math.pow(self.trial, 2.0)
+            #self.epsilon = 1.0/math.pow(self.trial, 2.0)  # doesn't do as well as e
             self.trial += 1
         return None
 
@@ -104,9 +104,10 @@ class LearningAgent(Agent):
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
 
-        if state not in self.Q.keys():
-            self.Q[state] = {None: 0.0, 'forward': 0.0, 'left': 0.0, 'right': 0.0}
-        #print self.Q
+        if self.learning:
+            if state not in self.Q.keys():
+                self.Q[state] = {None: 0.0, 'forward': 0.0, 'left': 0.0, 'right': 0.0}
+
         return
 
     def choose_action(self, state):
@@ -157,7 +158,8 @@ class LearningAgent(Agent):
         # get self.Q[state][action]; this is the Q value to be updated
         #new value is: (1 - alpha) x Qold + (alpha x (reward + Qold))
         Qprevious = self.Q[state][action]
-        self.Q[state][action] = ((1.0 - self.alpha) * Qprevious) + (self.alpha * (reward + Qprevious))
+        #self.Q[state][action] = ((1.0 - self.alpha) * Qprevious) + (self.alpha * (reward + Qprevious))
+        self.Q[state][action] = Qprevious + (self.alpha * (reward - Qprevious))
         return
 
     def update(self):
@@ -169,7 +171,8 @@ class LearningAgent(Agent):
         self.createQ(state)                 # Create 'state' in Q-table
         action = self.choose_action(state)  # Choose an action
         reward = self.env.act(self, action)  # Receive a reward
-        self.learn(state, action, reward)   # Q-learn
+        if self.learning:
+            self.learn(state, action, reward)   # Q-learn
 
         return
         
@@ -192,7 +195,9 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning=True)
+    #agent = env.create_agent(LearningAgent)
+    #agent = env.create_agent(LearningAgent, learning=True)
+    agent = env.create_agent(LearningAgent, learning=True, alpha=0.2)
 
     ##############
     # Follow the driving agent
@@ -207,13 +212,16 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
+    #sim = Simulator(env, log_metrics=True, display=True, update_delay=0.01)
     sim = Simulator(env, log_metrics=True, display=True, update_delay=0.01, optimized=True)
-    
+
+
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
+    sim.run(n_test=10)
     sim.run(n_test=50, tolerance=0.01)
 
 
